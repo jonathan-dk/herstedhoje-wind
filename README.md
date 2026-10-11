@@ -1,16 +1,50 @@
-# React + Vite
+# 🪂 Herstedhøje Wind — Paragliding Training Map
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+En lille React-app der viser live-vindforhold på **Herstedhøje** (Albertslund) med forslag til de bedste træningsskråninger for paragliding/ground handling.
 
-Currently, two official plugins are available:
+![tech](https://img.shields.io/badge/React-Vite-blue) ![data](https://img.shields.io/badge/data-Open--Meteo-green)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- 🗺️ Kort over Herstedhøje (OpenStreetMap / Leaflet)
+- 🧭 8 skråninger (N, NE, Ø, SE, S, SV, V, NV) farvekodet efter aktuel vind:
+  - 🟢 **Grøn** — optimal (vind 2,5–8 m/s, inden for ±45° af skråningens retning)
+  - 🟢 **Lime** — OK (skrå vind, 45–75°)
+  - 🟡 **Gul** — for svag (< 2,5 m/s)
+  - 🟠 **Orange** — gusty (stød >6 m/s over middelvind)
+  - 🔴 **Rød** — for hård (> 8 m/s)
+  - ⬛ **Grå** — bagvind/off
+- ➡️ Vindpil på kortet (live retning)
+- 📊 Vind lige nu: m/s, stød, retning, temperatur + vind i 80/120 m højde
+- 🕐 Time-for-time vindprognose de næste ~14 timer
+- 🔄 Auto-opdatering hvert 10. minut
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Data
 
-## Expanding the Oxlint configuration
+Vinddata fra [Open-Meteo](https://open-meteo.com) (gratis, ingen API-nøgle).
+Position: **55.690558, 12.362768**
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Kom i gang
+
+```bash
+npm install
+npm run dev          # udvikling på http://localhost:5173
+npm run dev -- --host   # tilgængelig på hele lokalnettet
+```
+
+## Build
+
+```bash
+npm run build        # output i dist/
+npm run preview      # forhåndsvis produktions-build
+```
+
+## Tilpasning
+
+Rediger konstanterne i `src/App.jsx`:
+
+| Konstant | Betydning | Standard |
+|---|---|---|
+| `SUMMIT` | Toppens koordinater | `55.690558, 12.362768` |
+| `SLOPE_RADIUS_M` | Afstand fra top til skråningsmarkører | `120` |
+| `rateSlope()` | Grænser for svag/hård/gusty | 2,5–8 m/s, stød-diff 6 m/s |

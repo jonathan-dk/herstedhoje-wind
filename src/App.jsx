@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { MapContainer, TileLayer, Polyline, CircleMarker, Tooltip, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
+import VersionNr from './version_nr'
 
 // ---- Herstedhøje, Albertslund ----
 const SUMMIT = [55.690558, 12.362768]
@@ -74,6 +75,7 @@ export default function App() {
   const [sun, setSun] = useState(null)
   const [err, setErr] = useState(null)
   const [updated, setUpdated] = useState(null)
+  const [selected, setSelected] = useState(null) // index i hourly, null = live-vind
 
   useEffect(() => {
     const load = async () => {
@@ -81,7 +83,7 @@ export default function App() {
         const url =
           'https://api.open-meteo.com/v1/forecast?latitude=55.690558&longitude=12.362768' +
           '&current=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m' +
-          '&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,wind_speed_80m,wind_speed_120m,precipitation_probability' +
+          '&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,wind_speed_80m,wind_speed_120m,precipitation_probability,temperature_2m' +
           '&daily=sunrise,sunset' +
           '&timezone=Europe%2FCopenhagen&forecast_days=2&wind_speed_unit=ms'
         const r = await fetch(url)
@@ -103,7 +105,10 @@ export default function App() {
               t,
               speed: j.hourly.wind_speed_10m[k],
               gusts: j.hourly.wind_gusts_10m[k],
-              dir: j.hourly.wind_direction_10m[k],
+              direction: j.hourly.wind_direction_10m[k],
+              temp: j.hourly.temperature_2m[k],
+              w80: j.hourly.wind_speed_80m[k],
+              w120: j.hourly.wind_speed_120m[k],
               precip: j.hourly.precipitation_probability[k],
             }))
             .filter((h) => {
@@ -127,8 +132,12 @@ export default function App() {
     return () => clearInterval(id)
   }, [])
 
+  // Valgt time fra "Næste timer" styrer hele visningen — ellers live-vind
+  const sel = selected !== null ? hourly[selected] : null
+  const current = sel ?? wind
+
   const slopes = useMemo(() => {
-    if (!wind) return []
+    if (!current) return []
     return ASPECTS.map((a) => {
       const from = destPoint(SUMMIT[0], SUMMIT[1], a - 18, SLOPE_RADIUS_M)
       const to = destPoint(SUMMIT[0], SUMMIT[1], a + 18, SLOPE_RADIUS_M)
@@ -136,10 +145,10 @@ export default function App() {
         aspect: a,
         name: dirName(a),
         line: [from, to],
-        rating: rateSlope(a, wind.direction, wind.speed, wind.gusts),
+        rating: rateSlope(a, current.direction, current.speed, current.gusts),
       }
     })
-  }, [wind])
+  }, [current])
 
   const best = slopes.filter((s) => s.rating.status === 'good' || s.rating.status === 'ok')
 
@@ -148,6 +157,7 @@ export default function App() {
       <header>
         <h1>🪂 Herstedhøje — vind &amp; træningsskråninger</h1>
         {updated && <span className="updated">Opdateret {updated}</span>}
+        <span className="updated">v<VersionNr /></span>
       </header>
 
       <div className="content">
@@ -171,7 +181,7 @@ export default function App() {
                 </Tooltip>
               </Polyline>
             ))}
-            <WindArrow wind={wind} />
+            <WindArrow wind={current} />
           </MapContainer>
         </div>
 
@@ -179,7 +189,14 @@ export default function App() {
           {err && <p className="error">{err}</p>}
           {wind && (
             <>
-              <h2>Vind lige nu</h2>
+              <h2>
+                {sel ? `Vind kl. ${sel.t.slice(11, 16)}` : 'Vind lige nu'}
+                {sel && (
+                  <button className="live-btn" onClick={() => setSelected(null)} title="Vis live-vind igen">
+                    ↺ Live
+                  </button>
+                )}
+              </h2>
               {sun && (
                 <div className="sun-box">
                   🌅 Sol op <b>{sun.today.rise.slice(11, 16)}</b> · 🌇 Sol ned <b>{sun.today.set.slice(11, 16)}</b>
@@ -187,12 +204,12 @@ export default function App() {
                 </div>
               )}
               <div className="wind-grid">
-                <div><span className="big">{wind.speed.toFixed(1)}</span> m/s</div>
-                <div>Stød <span className="big">{wind.gusts.toFixed(1)}</span> m/s</div>
-                <div>Fra <span className="big">{dirName(wind.direction)}</span> ({wind.direction}°)</div>
-                <div><span className="big">{wind.temp.toFixed(0)}°</span>C</div>
-                <div>80 m: <b>{wind.w80?.toFixed(1)} m/s</b></div>
-                <div>120 m: <b>{wind.w120?.toFixed(1)} m/s</b></div>
+                <div><span className="big">{current.speed.toFixed(1)}</span> m/s</div>
+                <div>Stød <span className="big">{current.gusts.toFixed(1)}</span> m/s</div>
+                <div>Fra <span className="big">{dirName(current.direction)}</span> ({current.direction}°)</div>
+                <div><span className="big">{current.temp.toFixed(0)}°</span>C</div>
+                <div>80 m: <b>{current.w80?.toFixed(1)} m/s</b></div>
+                <div>120 m: <b>{current.w120?.toFixed(1)} m/s</b></div>
               </div>
 
               <h2>Foreslåede skråninger</h2>
@@ -222,12 +239,17 @@ export default function App() {
                   <tr><th>Tid</th><th>Vind</th><th>Stød</th><th>Retn.</th><th>Regn%</th></tr>
                 </thead>
                 <tbody>
-                  {hourly.map((h) => (
-                    <tr key={h.t}>
+                  {hourly.map((h, i) => (
+                    <tr
+                      key={h.t}
+                      className={selected === i ? 'selected' : ''}
+                      title="Klik for at se denne time"
+                      onClick={() => setSelected(selected === i ? null : i)}
+                    >
                       <td>{h.t.slice(11, 16)}</td>
                       <td>{h.speed.toFixed(1)}</td>
                       <td>{h.gusts.toFixed(1)}</td>
-                      <td>{dirName(h.dir)}</td>
+                      <td>{dirName(h.direction)}</td>
                       <td>{h.precip ?? '–'}</td>
                     </tr>
                   ))}

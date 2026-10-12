@@ -29,6 +29,12 @@ header h1 { font-size: 1.1rem; margin: 0; }
 .hours { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
 .hours th, .hours td { text-align: left; padding: 3px 4px; border-bottom: 1px solid #334155; }
 .hours th { color: #94a3b8; }
+.hours tbody tr { cursor: pointer; }
+.hours tbody tr:hover { background: #1e293b; }
+.hours tbody tr.selected { background: #0c4a6e; }
+
+.live-btn { margin-left: 8px; font-size: 0.7rem; font-weight: 700; background: #0ea5e9; color: #082f49; border: none; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.live-btn:hover { background: #38bdf8; }
 
 .legend { margin-top: 14px; font-size: 0.75rem; color: #cbd5e1; }
 .legend > div { display: flex; align-items: center; gap: 8px; padding: 2px 0; }

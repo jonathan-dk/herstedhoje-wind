@@ -17,6 +17,9 @@ header h1 { font-size: 1.1rem; margin: 0; }
 .wind-grid > div { background: #0f172a; border-radius: 8px; padding: 8px; font-size: 0.8rem; }
 .big { font-size: 1.2rem; font-weight: 700; }
 
+.sun-box { background: #292524; border: 1px solid #f59e0b55; border-radius: 8px; padding: 8px; font-size: 0.85rem; margin-bottom: 8px; }
+.sun-sub { color: #94a3b8; font-size: 0.75rem; margin-top: 4px; }
+
 .slopes { list-style: none; padding: 0; margin: 0; }
 .slopes li { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.85rem; }
 .slopes.small li { font-size: 0.75rem; color: #cbd5e1; }

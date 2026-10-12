@@ -71,6 +71,7 @@ function WindArrow({ wind }) {
 export default function App() {
   const [wind, setWind] = useState(null)
   const [hourly, setHourly] = useState([])
+  const [sun, setSun] = useState(null)
   const [err, setErr] = useState(null)
   const [updated, setUpdated] = useState(null)
 
@@ -81,6 +82,7 @@ export default function App() {
           'https://api.open-meteo.com/v1/forecast?latitude=55.690558&longitude=12.362768' +
           '&current=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m' +
           '&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,wind_speed_80m,wind_speed_120m,precipitation_probability' +
+          '&daily=sunrise,sunset' +
           '&timezone=Europe%2FCopenhagen&forecast_days=2&wind_speed_unit=ms'
         const r = await fetch(url)
         const j = await r.json()
@@ -111,6 +113,10 @@ export default function App() {
             .slice(0, 14)
         )
         setUpdated(new Date().toLocaleTimeString('da-DK'))
+        setSun({
+          today: { rise: j.daily.sunrise[0], set: j.daily.sunset[0] },
+          tomorrow: { rise: j.daily.sunrise[1], set: j.daily.sunset[1] },
+        })
         setErr(null)
       } catch (e) {
         setErr('Kunne ikke hente vinddata: ' + e.message)
@@ -174,6 +180,12 @@ export default function App() {
           {wind && (
             <>
               <h2>Vind lige nu</h2>
+              {sun && (
+                <div className="sun-box">
+                  🌅 Sol op <b>{sun.today.rise.slice(11, 16)}</b> · 🌇 Sol ned <b>{sun.today.set.slice(11, 16)}</b>
+                  <div className="sun-sub">I morgen: {sun.tomorrow.rise.slice(11, 16)} / {sun.tomorrow.set.slice(11, 16)}</div>
+                </div>
+              )}
               <div className="wind-grid">
                 <div><span className="big">{wind.speed.toFixed(1)}</span> m/s</div>
                 <div>Stød <span className="big">{wind.gusts.toFixed(1)}</span> m/s</div>
